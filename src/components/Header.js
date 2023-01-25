@@ -20,6 +20,8 @@ Header.defaultProps = {
 
 Header.propTypes = {
   title: PropTypes.string,
+  color: PropTypes.string,
+  onClick: PropTypes.func
 }
 
 // for inline styles
