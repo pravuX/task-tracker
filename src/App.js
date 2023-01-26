@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState } from 'react'
 import Header from './components/Header'
-import Tasks from './components/Tasks';
+import Tasks from './components/Tasks'
+import AddTask from './components/AddTask'
 
 const App = () => {
   const [tasks, setTasks] = useState([
@@ -33,13 +34,28 @@ const App = () => {
     setTasks(tasks.filter((task) => task.id !== id))
   }
 
+  // Toggle Reminder
+  const toggleReminder = (id) => {
+    // copies the entire tasks array but inverts the value for
+    // reminder of the selected task and passes the new array
+    // to setTasks which updates the appearance of the selected
+    // task.
+    setTasks(tasks.map((task) =>
+      task.id === id ? {
+        ...task, reminder:
+          !task.reminder
+      } : task)
+    )
+  }
+
   return (
-    // using the ternary operator is display a message if 
+    // using the ternary operator is display a message if
     // there are no tasks left
     <div className="container">
       <Header />
-      { tasks.length > 0 ?
-        <Tasks tasks={tasks} onDelete={deleteTask} />
+      <AddTask />
+      {tasks.length > 0 ?
+        <Tasks tasks={tasks} onDelete={deleteTask} onToggle={toggleReminder} />
         :
         'All tasks completed!'
       }
@@ -47,4 +63,4 @@ const App = () => {
   );
 }
 
-export default App;
+export default App
