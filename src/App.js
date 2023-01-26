@@ -1,41 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import Tasks from './components/Tasks'
 import AddTask from './components/AddTask'
 
 const App = () => {
   const [showAddTask, setShowAddTask] = useState(false)
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      text: 'Doctors Appointment',
-      day: 'Feb 5th at 2:30pm',
-      reminder: true,
-    },
-    {
-      id: 2,
-      text: 'Meeting at School',
-      day: 'Feb 6th at 1:30pm',
-      reminder: true,
-    },
-    {
-      id: 3,
-      text: 'Food Shopping',
-      day: 'Feb 5th at 2:30pm',
-      reminder: false,
+  // if not using the mock json server we would
+  // put the tasks array here instead of the
+  // empty array
+  const [tasks, setTasks] = useState([])
+
+  // Called when the page loads
+  useEffect(() => {
+    const getTasks = async () => {
+      const tasksFromServer = await fetchTasks()
+      setTasks(tasksFromServer)
     }
-  ])
+
+    getTasks()
+  }, [])
+
+  // fetch tasks array from server
+  const fetchTasks = async () => {
+    const res = await fetch('http://localhost:5000/tasks')
+    const data = await res.json()
+
+    return data
+  }
+
+  // fetch a task of given id from the server
+  const fetchTask = async (id) => {
+    const res = await fetch(`http://localhost:5000/tasks/${id}`)
+    const data = await res.json()
+
+    return data
+  }
 
   // Add Task
-  const addTask = (task) => {
+  const addTask = async (task) => {
+    const res = await fetch('http://localhost:5000/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify(task)
+    })
+    // get newly created task
+    const data = await res.json()
+    // add it to the ui
+    setTasks([...tasks, data])
+
+    // w/o using json server
     // create a random id for the new task
-    const id = Math.floor(Math.random() * 1000) + 1
-    const newTask = { id: id, ...task }
-    setTasks([...tasks, newTask])
+    // const id = Math.floor(Math.random() * 1000) + 1
+    // const newTask = { id: id, ...task }
+    // setTasks([...tasks, newTask])
   }
 
   // Delete Task
-  const deleteTask = (id) => {
+  const deleteTask = async (id) => {
+    // remove task from the json server
+    await fetch(`http://localhost:5000/tasks/${id}`, {
+      method: 'DELETE'
+    })
+    // Remove task from the ui:
     // this is passing to setTasks the above tasks array but
     // filtering the 'deleted' task from the tasks array
     // each time when the setTasks is called with the filtered
@@ -44,15 +72,33 @@ const App = () => {
   }
 
   // Toggle Reminder
-  const toggleReminder = (id) => {
+  const toggleReminder = async (id) => {
     // copies the entire tasks array but inverts the value for
     // reminder of the selected task and passes the new array
     // to setTasks which updates the appearance of the selected
     // task.
+    // while using the json server the inversion
+    // of reminder is happening by making the
+    // following PUT request
+
+    // toggle reminder of the task on the json server
+    const taskToToggle = await fetchTask(id)
+    const updatedTask = { ...taskToToggle, reminder: !taskToToggle.reminder }
+
+    const res = await fetch(`http://localhost:5000/tasks/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify(updatedTask)
+    })
+
+    const data = await res.json()
+
+    // change appearnce of the task
     setTasks(tasks.map((task) =>
       task.id === id ? {
-        ...task, reminder:
-          !task.reminder
+        ...task, reminder: data.reminder
       } : task)
     )
   }
@@ -64,7 +110,7 @@ const App = () => {
     // using a shorthand ternary operator to
     // show or hide the AddTask form
     <div className="container">
-      <Header onAdd={() => setShowAddTask(!showAddTask)} showAdd={showAddTask}/>
+      <Header onAdd={() => setShowAddTask(!showAddTask)} showAdd={showAddTask} />
       {showAddTask && <AddTask onAdd={addTask} />}
 
       {tasks.length > 0 ?
